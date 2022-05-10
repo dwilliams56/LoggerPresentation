@@ -1,0 +1,136 @@
+<div class="px-5 py-2 bg-white">
+    <mat-form-field appearance="outline" class="w-8/12">
+      <mat-label> Search </mat-label>
+      <input
+        matInput
+        (keyup)="applyFilter($event)"
+        #input
+      />
+    </mat-form-field>
+    <br>
+<div class="px-3">
+    <button type="button" class="mx-5">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-sliders" viewBox="0 0 16 16">
+      </svg>
+      <mat-form-field appearance="fill">
+       <mat-label>Enter a date range</mat-label>
+       <mat-date-range-input [rangePicker]="picker">
+         <input matStartDate placeholder="Start date" (dateChange)="fromTime('fromTime', $event)">
+         <input matEndDate placeholder="End date" (dateChange)="toTime('toTime', $event)">
+       </mat-date-range-input>
+       <mat-hint>MM/DD/YYYY – MM/DD/YYYY</mat-hint>
+       <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+       <mat-date-range-picker #picker></mat-date-range-picker>
+     </mat-form-field>
+    </button>
+    <button type="button" class="text-white gap-2 bg-blue-200 hover:bg-gray-500  focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center mr-2 dark:bg-blue-200 dark:hover:bg-gray-500  #mybutton" (click)="applyDateRangeFilter(getStartDate(), getEndDate())">Filter Date</button>
+    <button type="button" class="text-white gap-2 bg-blue-200 hover:bg-gray-500  focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center mr-2 dark:bg-blue-200 dark:hover:bg-gray-500  #mybutton" (click)="deleteSelected()">Delete</button>
+    <button type="button" class="text-white gap-2 bg-blue-200 hover:bg-gray-500  focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center mr-2 dark:bg-blue-200 dark:hover:bg-gray-500  #mybutton" (click)="saveUserBookmark()">BookMark</button>
+    <button type="button" class="text-white gap-2 bg-blue-200 hover:bg-gray-500  focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center mr-2 dark:bg-blue-200 dark:hover:bg-gray-500  #mybutton" (click)="openNoteDialog()">Edit Note</button>
+    <button type="button" class="text-white gap-2 bg-blue-200 hover:bg-gray-500  focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center mr-2 dark:bg-blue-200 dark:hover:bg-gray-500  #mybutton" (click)="addNotes()">AddNotes</button>
+  </div>
+
+
+<div class="table-container">
+
+  <table mat-table [dataSource]="dataSource" matSort class="w-max">
+  <!-- Checkbox Column -->
+    <ng-container matColumnDef="select">
+        <th mat-header-cell *matHeaderCellDef>
+        <mat-checkbox (change)="$event ? masterToggle() : null"
+                        [checked]="selection.hasValue && isAllSelected()"
+                        [indeterminate]="selection.hasValue() && !isAllSelected()"
+                        [aria-label]="checkboxLabel()">
+        </mat-checkbox>
+        </th>
+        <td mat-cell *matCellDef="let row">
+        <mat-checkbox (click)="$event.stopPropagation()"
+                        (change)="$event ? selection.toggle(row) : null"
+                        [checked]="selection.isSelected(row)"
+                        [aria-label]="checkboxLabel(row)">
+        </mat-checkbox>
+        </td>
+    </ng-container>
+
+    <!-- Other Data Columns -->
+    <ng-container matColumnDef="logID">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Log ID </th>
+      <td mat-cell *matCellDef="let element"> {{element.logID}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="application">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Application </th>
+      <td mat-cell *matCellDef="let element"> {{element.application}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="applicationVersion">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> App Version </th>
+      <td mat-cell *matCellDef="let element"> {{element.applicationVersion}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="userID">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> User ID </th>
+      <td mat-cell *matCellDef="let element"> {{element.userID}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="logDateTime">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Date/Time </th>
+        <td mat-cell *matCellDef="let element"> {{element.logDateTime}} </td>
+    </ng-container>
+    <ng-container matColumnDef="companyId">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header> Company ID </th>
+        <td mat-cell *matCellDef="let element"> {{element.companyId}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="logContent">
+        <th mat-header-cell *matHeaderCellDef> Content </th>
+        <td mat-cell *matCellDef="let element"> {{element.logContent}} </td>
+    </ng-container>
+
+
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef style="text-align: right;">  </th>
+      <td mat-cell *matCellDef="let element">
+        <div
+          style="display: flex; align-items: center; justify-content: flex-end"
+        >
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            [color]="bmkColor"
+            (click)="isBookmarked = !isBookmarked"
+
+
+            [attr.aria-label]="'Bookmark Log'"
+            [attr.aria-pressed]="isBookmarked"
+          >
+            <mat-icon>{{
+              isBookmarked ? "bookmark" : "bookmark_border"
+            }}</mat-icon>
+          </button>
+          <button mat-icon-button aria-label="add a note">
+            <mat-icon>edit_note</mat-icon>
+          </button>
+        </div>
+      </td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="displayedColumns, sticky:true"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+            (click)="selection.toggle(row)">
+        </tr>
+  </table>
+</div>
+
+
+
+
+<!-- STICKY FOOTER -->
+<div class="sticky bottom-0">
+  <mat-paginator
+    [pageSizeOptions]="[25, 50, 100]"
+    showFirstLastButtons
+    MatFormFieldAppearance
+  ></mat-paginator>
+</div>
+
